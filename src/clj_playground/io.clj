@@ -7,3 +7,6 @@
     (doall
       (csv/read-csv reader))))
 
+(defn write-output [filename data]
+  (with-open [writer (io/writer filename)]
+    (csv/write-csv writer data)))

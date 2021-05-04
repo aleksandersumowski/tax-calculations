@@ -25,7 +25,10 @@
                                                                 :units (:units purchase)
                                                                 :purchase-price (:price purchase)
                                                                 :sale-date (:date sale)
-                                                                :sale-value (:value sale)
+                                                                ;; taking :value from sale
+                                                                ;; assumes always complete sale from a single purchase
+                                                                :sale-value (* (:price sale)
+                                                                               (:units purchase))
                                                                 :sale-price (:price sale)})
 
                                                              consumed-purchases))]

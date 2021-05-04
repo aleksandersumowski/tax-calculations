@@ -14,4 +14,6 @@
 .hgignore
 .hg/
 data/transactions/
-data/ouput.csv
+data/output.csv
+.DS_Store
+.~.*

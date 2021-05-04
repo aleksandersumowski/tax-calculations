@@ -49,8 +49,7 @@
    :sale-price 31.8})})
 
 (defn flat-merge [[k v]]
-  (map #(merge {"asset-code" k} %) v))
-
+  (map #(merge {:asset-code k} %) v))
 
 (defn shift-day-back [date-string]
   (as-> date-string %
@@ -58,30 +57,56 @@
        (dt/minus % (dt/days 1))
        (dt/format "yyyy-MM-dd" %)))
 
-#_(shift-day-back "2020-10-01")
-
-
 (defn lookup-exchange-rate [initial-date]
+  "looks for previous working day"
   (loop [date initial-date]
-    (if-let [result (get exchange-rates date)]
+    (if-let [result (get exchange-rates (shift-day-back date))]
       result
-      (recur date))))
-
-(lookup-exchange-rate "2018-06-10")
+      (recur (shift-day-back date)))))
 
 (defn lookup-exchange-rates [m]
   (let [purchase-exchange-rate (lookup-exchange-rate (:purchase-date m))
-        sale-exchange-rate (lookup-exchange-rate (:sale-date m))]
+        sale-exchange-rate (lookup-exchange-rate (:sale-date m))
+        purchase-value-pln (* purchase-exchange-rate (:purchase-value m))
+        sale-value-pln (* sale-exchange-rate (:sale-value m))]
     (merge m
            {:purchase-exchange-rate purchase-exchange-rate
-            :sale-exchange-rate sale-exchange-rate})))
+            :purchase-value-pln purchase-value-pln
+            :sale-exchange-rate sale-exchange-rate
+            :sale-value-pln sale-value-pln
+            :profit-pln (-  sale-value-pln purchase-value-pln)})))
 
 
-(->> transactions
+(def headers
+  [:asset-code
+   :purchase-date :sale-date :units
+   :purchase-price :purchase-exchange-rate :purchase-value-pln
+   :sale-price     :sale-exchange-rate     :sale-value-pln
+   :profit-pln])
+
+(def result
+  (->> transactions
      (transform [MAP-VALS] (comp flatten
                             algo/process))
      (map flat-merge)
      flatten
-     )
+     (map lookup-exchange-rates)))
 
+(defn- result-key [t]
+  (str (:date t) (:asset-code t)))
 
+(def postprocessed
+  (as-> result %
+       (sort-by result-key %)
+       (map (apply juxt headers) %)
+       (conj % headers)))
+
+(io/write-output "./data/output.csv" postprocessed)
+
+(comment
+  (def asset-code "BDFCGG9")
+
+  (get transactions asset-code)
+
+  (get result asset-code)
+  )
