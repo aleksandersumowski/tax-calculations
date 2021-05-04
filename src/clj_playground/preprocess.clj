@@ -22,7 +22,7 @@
 (defn- parse-dates [transactions]
   (map #(update % :date parse-date) transactions))
 
-(defn- parse-float [f]
+(defn parse-float [f]
   (Float/parseFloat f))
 
 (defn- abs [n]
