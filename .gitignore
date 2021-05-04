@@ -13,4 +13,4 @@
 /.socket-repl-port
 .hgignore
 .hg/
-data/
+data/transactions/
