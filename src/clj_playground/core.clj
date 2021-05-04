@@ -1,6 +1,7 @@
 (ns clj-playground.core
   (:require [com.rpl.specter :refer [transform MAP-VALS] :as s]
-            [java-time :as dt])
+            [java-time :as dt]
+            [clojure.test :refer [deftest is]])
   (:require [clj-playground.io :as io]
             [clj-playground.preprocess :as prep]
             [clj-playground.algo :as algo]))
@@ -57,8 +58,9 @@
        (dt/minus % (dt/days 1))
        (dt/format "yyyy-MM-dd" %)))
 
-(defn lookup-exchange-rate [initial-date]
+(defn lookup-exchange-rate
   "looks for previous working day"
+  [initial-date]
   (loop [date initial-date]
     (if-let [result (get exchange-rates (shift-day-back date))]
       result
@@ -86,20 +88,22 @@
 
 (def result
   (->> transactions
-     (transform [MAP-VALS] (comp flatten
-                            algo/process))
-     (map flat-merge)
-     flatten
-     (map lookup-exchange-rates)))
+     (transform [MAP-VALS] (comp
+                            #(map lookup-exchange-rates %)
+                            flatten
+                            algo/process
+                            ))))
 
 (defn- result-key [t]
   (str (:date t) (:asset-code t)))
 
 (def postprocessed
   (as-> result %
-       (sort-by result-key %)
-       (map (apply juxt headers) %)
-       (conj % headers)))
+    (map flat-merge %)
+    (flatten %)
+    (sort-by result-key %)
+    (map (apply juxt headers) %)
+    (conj % headers)))
 
 (io/write-output "./data/output.csv" postprocessed)
 
@@ -110,3 +114,31 @@
 
   (get result asset-code)
   )
+
+(deftest tests
+  (let [sut (get result "BDFCGG9")]
+    (is (= 4.267299979925156
+           (->> sut
+                (s/select [s/ALL :units])
+                (reduce +))))
+
+    (is (= #{"2020-12-03" "2020-11-12" "2020-05-21"}
+           (->> sut
+                (s/select [s/ALL :sale-date])
+                set)))
+
+    (is (= 4
+           (count sut)))
+
+    ;; profit calculation works
+    (is (> 0.000001
+           (-
+            (- (->> sut
+                    (s/select [s/ALL :sale-value-pln])
+                    (reduce +))
+               (->> sut
+                    (s/select [s/ALL :purchase-value-pln])
+                    (reduce +)))
+            (->> sut
+                 (s/select [s/ALL :profit-pln])
+                 (reduce +)))))))
