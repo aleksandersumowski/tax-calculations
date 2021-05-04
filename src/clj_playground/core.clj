@@ -27,7 +27,7 @@
 ;  ...}
 (->> "./data/exchange-rates/2016-2020.csv"
      io/read-data
-     flatten
+     flatten 
      (apply hash-map)
      (transform [MAP-VALS] prep/parse-float)))
 
@@ -38,7 +38,7 @@
                  :sell (get sell key)}})))
 
 
-(def data
+(def data 
  {"B9MRHC2"
  '({:purchase-date "2018-10-18",
    :purchase-value 334.2356675304691,
@@ -60,18 +60,22 @@
 
 #_(shift-day-back "2020-10-01")
 
+
+(defn lookup-exchange-rate [initial-date]
+  (loop [date initial-date]
+    (if-let [result (get exchange-rates date)]
+      result
+      (recur date))))
+
+(lookup-exchange-rate "2018-06-10")
+
 (defn lookup-exchange-rates [m]
-  (let [purchase-exchange-rate (->> :purchase-date
-                                   m
-                                   shift-day-back
-                                   (get exchange-rates))
-        sale-exchange-rate (->> :sale-edate
-                                   m
-                                   shift-day-back
-                                   (get exchange-rates))]
+  (let [purchase-exchange-rate (lookup-exchange-rate (:purchase-date m))
+        sale-exchange-rate (lookup-exchange-rate (:sale-date m))]
     (merge m
            {:purchase-exchange-rate purchase-exchange-rate
             :sale-exchange-rate sale-exchange-rate})))
+
 
 (->> transactions
      (transform [MAP-VALS] (comp flatten
