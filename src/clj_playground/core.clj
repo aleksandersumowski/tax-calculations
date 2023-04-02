@@ -50,7 +50,7 @@
    :sale-price 31.8})})
 
 (defn flat-merge [[k v]]
-  (map #(merge {:asset-code k} %) v))
+  (map #(merge {:etf-ticker k} %) v))
 
 (defn shift-day-back [date-string]
   (as-> date-string %
@@ -80,7 +80,7 @@
 
 
 (def headers
-  [:asset-code
+  [:etf-ticker
    :purchase-date :sale-date :units
    :purchase-price :purchase-exchange-rate :purchase-value-pln
    :sale-price     :sale-exchange-rate     :sale-value-pln
@@ -95,7 +95,7 @@
                             ))))
 
 (defn- result-key [t]
-  (str (:date t) (:asset-code t)))
+  (str (:date t) (:etf-ticker t)))
 
 (def postprocessed
   (as-> result %
@@ -108,11 +108,11 @@
 (io/write-output "./data/output.csv" postprocessed)
 
 (comment
-  (def asset-code "BDFCGG9")
+  (def etf-ticker "BDFCGG9")
 
-  (get transactions asset-code)
+  (get transactions etf-ticker)
 
-  (get result asset-code)
+  (get result etf-ticker)
   )
 
 (deftest tests

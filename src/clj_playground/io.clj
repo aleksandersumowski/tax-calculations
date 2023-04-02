@@ -5,7 +5,7 @@
 (defn read-data [file-name]
   (with-open [reader (io/reader file-name)]
     (doall
-      (csv/read-csv reader))))
+      (csv/read-csv reader :separator \;))))
 
 (defn write-output [filename data]
   (with-open [writer (io/writer filename)]

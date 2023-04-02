@@ -16,7 +16,7 @@
 
 (defn- parse-date [d]
   (->> d
-       (dt/local-date "M/d/yyyy")
+       (dt/local-date "yyyyMMdd")
        (dt/format "yyyy-MM-dd")))
 
 (defn- parse-dates [transactions]
@@ -28,20 +28,24 @@
 (defn- abs [n]
   (Math/abs n))
 
+(defn parse-number [n]
+  (-> n
+      parse-float
+      abs))
+
 (defn- parse-numbers [transactions]
   (->> transactions
-       (map #(update % :price parse-float))
-       (map #(update % :value parse-float))
-       (map #(update % :units (comp abs
-                                  parse-float)))))
+       (map #(update % :price parse-number))
+       (map #(update % :value parse-number))
+       (map #(update % :units parse-number))))
 
 (defn- transaction-key [t]
-  (str (:date t) (:asset-code t) (:price t)))
+  (str (:date t) (:etf-ticker t) (:price t)))
 
 (defn- merge-transactions [transactions]
   (reduce
     (fn [m1 m2]
-      (merge (select-keys m1 [:date :asset-code :price])
+      (merge (select-keys m1 [:date :etf-ticker :price])
              {:value (+
                       (:value m1)
                       (:value m2))
@@ -53,10 +57,10 @@
 (defn preprocess [csv-data]
   (->> csv-data
        csv-data->maps 
-       parse-dates
-       parse-numbers
-       (sort-by transaction-key)
-       (partition-by transaction-key)
-       (map merge-transactions)
-       (group-by :asset-code)
-       (transform [MAP-VALS ALL] #(dissoc % :wrapper :asset-code))))
+       ; parse-dates
+       ; parse-numbers
+       ; (sort-by transaction-key)
+       ; (partition-by transaction-key)
+       ; (map merge-transactions)
+       #_(group-by :etf-ticker)
+       #_(transform [MAP-VALS ALL] #(dissoc % :wrapper :etf-ticker))))
