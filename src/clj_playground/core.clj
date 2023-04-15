@@ -7,47 +7,27 @@
             [clj-playground.algo :as algo]))
 
 (def sell
-  (->  "./data/transactions/sell.csv"
-      io/read-data
-      prep/preprocess))
+  (->>  "./data/transactions/sell.csv"
+       (io/read-data \;)
+       prep/preprocess))
 
 (def buy
-  (-> "./data/transactions/buy.csv"
-      io/read-data
-      prep/preprocess))
+  (->> "./data/transactions/buy.csv"
+       (io/read-data \;)
+       prep/preprocess))
 
 (def exchange-rates
-; {"2019-07-08" 4.7446,
-;  "2016-04-13" 5.3654,
-;  "2016-11-09" 4.8727,
-;  "2019-05-16" 4.9112,
-;  "2017-08-01" 4.7622,
-;  "2018-05-18" 4.9117,
-;  "2020-02-06" 5.0177,
-;  "2020-01-21" 4.9919,
-;  ...}
- (->> "./data/exchange-rates/2016-2022.csv"
-      io/read-data
-      flatten 
-      (apply hash-map)
-      (transform [MAP-VALS] prep/parse-float)))
+  (->> "./data/exchange-rates/2016-2022.csv"
+       (io/read-data \,)
+       flatten 
+       (apply hash-map)
+       (transform [MAP-VALS] prep/parse-float)))
 
 (def transactions
   (apply merge
          (for [key (keys sell)]
            {key {:buy (get buy key)
                  :sell (get sell key)}})))
-
-
-(def data 
- {"B9MRHC2"
-  '({:purchase-date "2018-10-18",
-     :purchase-value 334.2356675304691,
-     :units 11.178600311279297,
-     :purchase-price 29.8996,
-     :sale-date "2020-07-09",
-     :sale-value 355.47999572753906,
-     :sale-price 31.8})})
 
 (defn flat-merge [[k v]]
   (map #(merge {:etf-ticker k} %) v))
@@ -108,15 +88,25 @@
 (io/write-output "./data/output.csv" postprocessed)
 
 (comment
-  (def etf-ticker "BDFCGG9")
+  (def data  
+    {"B9MRHC2"
+     '({:purchase-date "2018-10-18",
+        :purchase-value 334.2356675304691,
+        :units 11.178600311279297,
+        :purchase-price 29.8996,
+        :sale-date "2020-07-09",
+        :sale-value 355.47999572753906,
+        :sale-price 31.8})})
+  (def etf-ticker "IS15")
 
   (get transactions etf-ticker)
 
   (get result etf-ticker))
+   
   
 
 (deftest tests
-  (let [sut (get result "BDFCGG9")]
+  (let [sut (get result "BDFCGG12")]
     (is (= 4.267299979925156
            (->> sut
                 (s/select [s/ALL :units])
