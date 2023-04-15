@@ -26,11 +26,11 @@
 ;  "2020-02-06" 5.0177,
 ;  "2020-01-21" 4.9919,
 ;  ...}
-(->> "./data/exchange-rates/2016-2020.csv"
-     io/read-data
-     flatten 
-     (apply hash-map)
-     (transform [MAP-VALS] prep/parse-float)))
+ (->> "./data/exchange-rates/2016-2022.csv"
+      io/read-data
+      flatten 
+      (apply hash-map)
+      (transform [MAP-VALS] prep/parse-float)))
 
 (def transactions
   (apply merge
@@ -41,13 +41,13 @@
 
 (def data 
  {"B9MRHC2"
- '({:purchase-date "2018-10-18",
-   :purchase-value 334.2356675304691,
-   :units 11.178600311279297,
-   :purchase-price 29.8996,
-   :sale-date "2020-07-09",
-   :sale-value 355.47999572753906,
-   :sale-price 31.8})})
+  '({:purchase-date "2018-10-18",
+     :purchase-value 334.2356675304691,
+     :units 11.178600311279297,
+     :purchase-price 29.8996,
+     :sale-date "2020-07-09",
+     :sale-value 355.47999572753906,
+     :sale-price 31.8})})
 
 (defn flat-merge [[k v]]
   (map #(merge {:etf-ticker k} %) v))
@@ -91,8 +91,8 @@
      (transform [MAP-VALS] (comp
                             #(map lookup-exchange-rates %)
                             flatten
-                            algo/process
-                            ))))
+                            algo/process))))
+                            
 
 (defn- result-key [t]
   (str (:date t) (:etf-ticker t)))
@@ -112,8 +112,8 @@
 
   (get transactions etf-ticker)
 
-  (get result etf-ticker)
-  )
+  (get result etf-ticker))
+  
 
 (deftest tests
   (let [sut (get result "BDFCGG9")]

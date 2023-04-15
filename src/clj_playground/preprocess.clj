@@ -12,7 +12,7 @@
             (map #(str/replace % "(s)" ""))
             (map keyword) ;; Drop if you want string keys instead
             repeat)
-	  (rest csv-data)))
+    (rest csv-data)))
 
 (defn- parse-date [d]
   (->> d
@@ -25,13 +25,16 @@
 (defn parse-float [f]
   (Float/parseFloat f))
 
-(defn- abs [n]
-  (Math/abs n))
-
 (defn parse-number [n]
   (-> n
+      (str/escape {(char 160) ""}) 
+      (str/replace "," ".")
+      (str/replace #"\s\+" "")
       parse-float
       abs))
+
+(comment 
+  (parse-number "-1 138.20"))
 
 (defn- parse-numbers [transactions]
   (->> transactions
@@ -57,10 +60,10 @@
 (defn preprocess [csv-data]
   (->> csv-data
        csv-data->maps 
-       ; parse-dates
-       ; parse-numbers
-       ; (sort-by transaction-key)
-       ; (partition-by transaction-key)
-       ; (map merge-transactions)
-       #_(group-by :etf-ticker)
-       #_(transform [MAP-VALS ALL] #(dissoc % :wrapper :etf-ticker))))
+       parse-dates
+       parse-numbers
+       (sort-by transaction-key)
+       (partition-by transaction-key)
+       (map merge-transactions)
+       (group-by :etf-ticker)
+       (transform [MAP-VALS ALL] #(select-keys % [:date :price :value :units]))))
